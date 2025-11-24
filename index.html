@@ -108,3 +108,155 @@
             height: 54px;
             background: #ff3b30;
             border-radius: 50%;
+            border: 4px solid #d1d1d6;
+            touch-action: manipulation;
+            box-shadow: 0 4px 0 #b0261e;
+            transition: transform 0.05s, box-shadow 0.05s;
+            z-index: 103;
+        }
+
+        .shutter-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b0261e;
+        }
+
+        .slot {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 190px;
+            height: 14px;
+            background: #000;
+            border-radius: 8px;
+            z-index: 101;
+        }
+
+        .polaroid {
+            position: absolute;
+            width: var(--paper-width);
+            height: var(--paper-height);
+            background: #fff;
+            padding: 12px 12px 50px 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            touch-action: none;
+            will-change: transform;
+        }
+
+        .polaroid-img {
+            width: 100%;
+            height: 156px;
+            background: #222;
+            overflow: hidden;
+        }
+
+        .polaroid-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 28px;
+            height: 28px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+            border: 2px solid #fff;
+        }
+        
+        /* 🚀 极速显影动画 (1.5秒完成) */
+        @keyframes develop {
+            0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; }
+            40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; }
+            100% { filter: none; opacity: 1; }
+        }
+
+        .developing {
+            animation: develop 1.5s ease-out forwards;
+        }
+
+        .hint-text {
+            position: absolute;
+            width: 100%;
+            top: 15%;
+            text-align: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="photo-wall">
+        <div class="hint-text">READY TO SHOOT</div>
+    </div>
+
+    <div class="camera-container">
+        <div class="slot"></div>
+        <div id="eject-layer" style="position: absolute; top: 0; left: 30px; width: 180px; height: 10px; z-index: 90;"></div>
+
+        <div class="camera-body">
+            <div class="stripe"></div>
+            <div class="lens-area">
+                <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
+            </div>
+            <button class="shutter-btn" id="shutter"></button>
+        </div>
+    </div>
+
+    <canvas id="capture-canvas" style="display: none;"></canvas>
+
+    <script>
+        const video = document.getElementById('camera-feed');
+        const canvas = document.getElementById('capture-canvas');
+        const shutterBtn = document.getElementById('shutter');
+        const ejectLayer = document.getElementById('eject-layer');
+        const photoWall = document.getElementById('photo-wall');
+
+        // --- 1. 拟真音效引擎 (Web Audio API) ---
+        // 这里模拟真实的机械快门“咔嚓”声，而不是电子滴声
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        // 创建白噪音 buffer (用于模拟机械撞击/快门声)
+        function createNoiseBuffer() {
+            const bufferSize = audioCtx.sampleRate * 2; // 2秒缓冲区
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            return buffer;
+        }
+        const noiseBuffer = createNoiseBuffer();
+
+        function playShutterSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
+
+            // 声音1：高频“咔” (快门开启)
+            const noise1 = audioCtx.createBufferSource();
+            noise1.buffer = noiseBuffer;
+            const filter1 = audioCtx.createBiquadFilter();
+            filter1.type = 'highpass';
+            filter1.frequency.value = 1000;
+            const gain1 = audioCtx.createGain();
+            gain1.gain.setValueAtTime(0.8, t);
