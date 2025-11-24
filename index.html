@@ -5,121 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>旅行拍立得 v5.0</title>
+    <title>ProCam 调色大师</title>
     <link rel="apple-touch-icon" href="icon.png">
     <style>
         :root {
-            --cam-width: 260px; /*稍微加宽一点放滤镜*/
-            --cam-height: 240px;
+            --cam-width: 300px; /* 加宽相机机身以容纳两侧按钮 */
+            --cam-height: 220px;
             --paper-width: 180px;
             --paper-height: 216px;
         }
         body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
-            background-color: #1a1a1a;
-            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-color: #111;
+            /* 更有质感的暗色背景 */
+            background-image: radial-gradient(circle at center, #222 0%, #000 100%);
             overflow: hidden; font-family: -apple-system, sans-serif;
             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
         #photo-wall { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; touch-action: none; }
-        .camera-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: var(--cam-width); height: var(--cam-height); z-index: 100; }
+        
+        /* 相机容器 */
+        .camera-container { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: var(--cam-width); height: var(--cam-height); z-index: 100; }
         
         .camera-body { 
-            width: 100%; height: 100%; background: #e0e0e0; border-radius: 24px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.9); 
-            position: relative; display: flex; flex-direction: column; align-items: center; z-index: 102; 
+            width: 100%; height: 100%; background: #dcdcdc; border-radius: 28px; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7), inset 0 2px 5px rgba(255,255,255,0.9); 
+            position: relative; display: flex; justify-content: center; align-items: center; z-index: 102; 
         }
 
-        .stripe { width: 100%; height: 10px; background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff); margin-top: 25px; }
+        /* 装饰条 */
+        .stripe { 
+            position: absolute; top: 20px; width: 100%; height: 8px; 
+            background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff); 
+            z-index: 0;
+        }
         
-        /* 镜头区域 */
+        /* 镜头区域 (居中) */
         .lens-area { 
-            width: 110px; height: 110px; background: #000; border-radius: 50%; margin-top: 10px; 
-            border: 3px solid #ccc; box-shadow: 0 5px 20px rgba(0,0,0,0.5); overflow: hidden; 
-            position: relative; display: flex; justify-content: center; align-items: center; 
+            width: 130px; height: 130px; background: #000; border-radius: 50%; 
+            border: 4px solid #bbb; box-shadow: 0 5px 25px rgba(0,0,0,0.5); overflow: hidden; 
+            position: relative; z-index: 10; display: flex; justify-content: center; align-items: center;
         }
         
-        /* 视频容器 */
-        .video-container {
-            width: 100%; height: 100%; position: relative;
-        }
-
         video#camera-feed { 
             width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); 
-            filter: brightness(1.15) contrast(0.95) saturate(1.1); background: #000; 
+            background: #000; transition: filter 0.3s ease; /* 滤镜切换动画 */
         }
 
-        /* 预览叠加层 */
-        #preview-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center;
-            opacity: 0.3; /* 预览时的透明度 */
-            pointer-events: none;
-            mix-blend-mode: screen; /* 滤镜混合模式 */
-            transform: scaleX(-1); /* 保持跟镜像视频一致 */
+        /* --- 左侧：滤镜选择栏 --- */
+        .controls-left {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 12px;
+            z-index: 20;
         }
 
-        /* 滤镜滚动条 */
-        .filter-scroll {
-            width: 90%;
-            height: 50px;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            /* 隐藏滚动条 */
-            -ms-overflow-style: none; scrollbar-width: none;
+        .filter-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #333; border: 2px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            color: #fff; font-size: 10px; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; cursor: pointer; transition: transform 0.1s, background 0.2s;
         }
-        .filter-scroll::-webkit-scrollbar { display: none; }
-
-        .filter-item {
-            flex: 0 0 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #999;
-            margin-right: 10px;
-            border: 2px solid #fff;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .filter-item.active {
-            border-color: #ff3b30;
-            transform: scale(1.1);
-        }
-        .filter-item img { width: 100%; height: 100%; object-fit: cover; }
-        .filter-item span { /* 无滤镜的图标 */
-            display: block; width: 100%; height: 100%; background: #ccc;
-            display: flex; justify-content: center; align-items: center; font-size: 12px; color: #555;
+        .filter-btn.active {
+            border-color: #ff3b30; transform: scale(1.15); background: #000; color: #ff3b30;
         }
 
-        /* 快门按钮 - 位置稍微下移 */
+        /* --- 右侧：快门区域 --- */
+        .controls-right {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            z-index: 20;
+        }
+
         .shutter-btn { 
-            position: absolute; right: 15px; bottom: 15px; 
-            width: 50px; height: 50px; background: #ff3b30; border-radius: 50%; border: 4px solid #d1d1d6; 
-            touch-action: manipulation; box-shadow: 0 4px 0 #b0261e; transition: transform 0.05s, box-shadow 0.05s; z-index: 103; 
+            width: 56px; height: 56px; background: #ff3b30; border-radius: 50%; 
+            border: 4px solid #fff; touch-action: manipulation; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
+            transition: transform 0.05s, box-shadow 0.05s; 
         }
-        .shutter-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #b0261e; }
+        .shutter-btn:active { transform: scale(0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
         
-        .slot { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 190px; height: 14px; background: #000; border-radius: 8px; z-index: 101; }
-        .polaroid { position: absolute; width: var(--paper-width); height: var(--paper-height); background: #fff; padding: 12px 12px 50px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start; touch-action: none; will-change: transform, opacity; }
-        .polaroid-img { width: 100%; height: 156px; background: #222; overflow: hidden; position: relative; }
+        /* 出纸口 */
+        .slot { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 200px; height: 12px; background: #111; border-radius: 6px; z-index: 101; }
+        
+        /* 拍立得照片 */
+        .polaroid { 
+            position: absolute; width: var(--paper-width); height: var(--paper-height); background: #fff; 
+            padding: 12px 12px 50px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start; 
+            touch-action: none; will-change: transform, opacity; 
+        }
+        .polaroid-img { width: 100%; height: 156px; background: #222; overflow: hidden; }
         .polaroid-img img { width: 100%; height: 100%; object-fit: cover; }
         
-        .delete-btn { position: absolute; top: -15px; right: -15px; width: 30px; height: 30px; background: #ff3b30; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 20px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 1001; display: none; border: 2px solid #fff; }
+        /* 删除按钮 */
+        .delete-btn { 
+            position: absolute; top: -15px; right: -15px; width: 30px; height: 30px; 
+            background: #ff3b30; color: white; border-radius: 50%; text-align: center; 
+            line-height: 28px; font-size: 20px; font-weight: bold; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 1001; 
+            display: none; border: 2px solid #fff; 
+        }
         
-        @keyframes develop { 0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; } 40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; } 100% { filter: none; opacity: 1; } }
+        /* 显影动画 */
+        @keyframes develop { 
+            0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; } 
+            40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; } 
+            100% { filter: none; opacity: 1; } 
+        }
         .developing { animation: develop 1.5s ease-out forwards; }
-        .hint-text { position: absolute; width: 100%; top: 12%; text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; pointer-events: none; letter-spacing: 1px; }
+        
+        /* 提示文字 */
+        .hint-text { position: absolute; width: 100%; top: 15%; text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; pointer-events: none; letter-spacing: 1px; }
+        
+        /* 颗粒感叠加层 (增加胶片质感) */
+        .grain-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+            opacity: 0.4; pointer-events: none; mix-blend-mode: overlay; z-index: 11;
+        }
     </style>
 </head>
 <body>
 
     <div id="photo-wall">
-        <div class="hint-text" id="status-text">滑动下方圆圈选择风景</div>
+        <div class="hint-text" id="status-text">左侧选滤镜 · 右侧按快门</div>
     </div>
 
     <div class="camera-container">
@@ -129,47 +138,34 @@
         <div class="camera-body">
             <div class="stripe"></div>
             
+            <!-- 左侧：滤镜按钮组 -->
+            <div class="controls-left">
+                <!-- 原片 -->
+                <div class="filter-btn active" onclick="setFilter('none', this)" style="background:#555">原</div>
+                <!-- 胶片 (暖色复古) -->
+                <div class="filter-btn" onclick="setFilter('vintage', this)" style="background:#d4a868; color:#000">胶</div>
+                <!-- 黑白 (高对比) -->
+                <div class="filter-btn" onclick="setFilter('bw', this)" style="background:#222">黑</div>
+                <!-- 冷白 (清新) -->
+                <div class="filter-btn" onclick="setFilter('cool', this)" style="background:#aaddff; color:#000">冷</div>
+                <!-- 港风 (高饱和暗调) -->
+                <div class="filter-btn" onclick="setFilter('hk', this)" style="background:#800020; color:#fff">港</div>
+            </div>
+
+            <!-- 中间：镜头 -->
             <div class="lens-area">
-                <div class="video-container">
-                    <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
-                    <!-- 风景叠加预览层 -->
-                    <div id="preview-overlay"></div>
-                </div>
+                <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
+                <!-- 胶片颗粒层 -->
+                <div class="grain-overlay"></div>
             </div>
 
-            <!-- 风景选择栏 -->
-            <div class="filter-scroll" id="filter-scroll">
-                <div class="filter-item active" onclick="selectFilter(this, null)">
-                    <span>无</span>
-                </div>
-                <!-- 巴黎 -->
-                <div class="filter-item" onclick="selectFilter(this, 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&q=80')">
-                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=100&q=60" alt="Paris">
-                </div>
-                <!-- 日本 -->
-                <div class="filter-item" onclick="selectFilter(this, 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=300&q=80')">
-                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=100&q=60" alt="Japan">
-                </div>
-                <!-- 纽约 -->
-                <div class="filter-item" onclick="selectFilter(this, 'https://images.unsplash.com/photo-1496442226666-8d4a0e62e6e9?w=300&q=80')">
-                    <img src="https://images.unsplash.com/photo-1496442226666-8d4a0e62e6e9?w=100&q=60" alt="NYC">
-                </div>
-                <!-- 极光 -->
-                <div class="filter-item" onclick="selectFilter(this, 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=300&q=80')">
-                    <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=100&q=60" alt="Aurora">
-                </div>
-                <!-- 海滩 -->
-                <div class="filter-item" onclick="selectFilter(this, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=80')">
-                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100&q=60" alt="Beach">
-                </div>
+            <!-- 右侧：快门 -->
+            <div class="controls-right">
+                <div class="shutter-btn" id="shutter"></div>
             </div>
-
-            <button class="shutter-btn" id="shutter"></button>
         </div>
     </div>
 
-    <!-- 隐藏的图片加载器，用于合成 -->
-    <img id="active-filter-img" crossorigin="anonymous" style="display: none;">
     <canvas id="capture-canvas" style="display: none;"></canvas>
 
     <script>
@@ -179,34 +175,30 @@
         const ejectLayer = document.getElementById('eject-layer');
         const photoWall = document.getElementById('photo-wall');
         const statusText = document.getElementById('status-text');
-        const previewOverlay = document.getElementById('preview-overlay');
-        const activeFilterImg = document.getElementById('active-filter-img');
-        const filterItems = document.querySelectorAll('.filter-item');
 
-        // 当前是否选择了风景
-        let currentFilterUrl = null;
+        // --- 1. PS级滤镜引擎 ---
+        // 这里定义了各种滤镜的 CSS 参数
+        const filters = {
+            none:    'brightness(1.05) contrast(1.0)', // 稍微提亮一点点
+            vintage: 'sepia(0.4) contrast(1.1) brightness(1.1) saturate(1.2)', // 复古暖色
+            bw:      'grayscale(1.0) contrast(1.3) brightness(1.1)', // 森山大道风格黑白
+            cool:    'brightness(1.15) contrast(0.95) saturate(1.0) hue-rotate(-5deg)', // 冷白皮
+            hk:      'contrast(1.2) saturate(1.4) brightness(0.9) hue-rotate(-10deg)' // 港风浓郁
+        };
 
-        // --- 1. 风景选择逻辑 ---
-        function selectFilter(el, url) {
-            // UI 更新
-            filterItems.forEach(item => item.classList.remove('active'));
-            el.classList.add('active');
+        let currentFilter = filters.none;
 
-            currentFilterUrl = url;
-
-            if (url) {
-                // 设置预览
-                previewOverlay.style.backgroundImage = `url(${url})`;
-                // 预加载图片用于Canvas合成
-                activeFilterImg.src = url;
-            } else {
-                // 清除
-                previewOverlay.style.backgroundImage = 'none';
-                activeFilterImg.removeAttribute('src');
-            }
+        function setFilter(type, btn) {
+            // UI 切换
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // 应用滤镜到视频预览
+            currentFilter = filters[type];
+            video.style.filter = currentFilter;
         }
 
-        // --- 2. 音效 ---
+        // --- 2. 音效 (保险丝版) ---
         let audioCtx;
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -228,6 +220,7 @@
             try {
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const t = audioCtx.currentTime;
+                // 机械快门声模拟
                 const noise1 = audioCtx.createBufferSource();
                 noise1.buffer = noiseBuffer;
                 const gain1 = audioCtx.createGain();
@@ -269,8 +262,8 @@
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play().catch(e => console.log(e));
-                    statusText.innerText = "滑动选择风景，点击红色按钮拍摄";
-                    setTimeout(() => statusText.style.opacity = '0.5', 3000);
+                    statusText.innerText = "滤镜已就绪";
+                    setTimeout(() => statusText.style.opacity = '0', 2000);
                 };
             } catch (err) {
                 statusText.innerText = "请允许摄像头权限";
@@ -278,7 +271,7 @@
         }
         initCamera();
 
-        // --- 4. 拍照与合成 ---
+        // --- 4. 拍照 (应用滤镜到照片) ---
         const handleShoot = (e) => {
             if(e.cancelable) e.preventDefault();
             if (!video.srcObject) return;
@@ -295,31 +288,24 @@
 
                 const ctx = canvas.getContext('2d');
                 
-                // 1. 绘制摄像头 (镜像)
+                // 1. 镜像翻转
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
                 
-                // 应用美颜
-                ctx.filter = 'brightness(115%) contrast(95%) saturate(110%)';
+                // 2. 核心：将 CSS 滤镜应用到 Canvas 画笔上！
+                // 这样保存下来的照片就带有同样的调色效果
+                ctx.filter = currentFilter;
+                
+                // 3. 绘制
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // 4. 重置滤镜防止影响后续
                 ctx.filter = 'none';
-
-                // 2. 绘制风景叠加 (如果选择了)
-                if (currentFilterUrl && activeFilterImg.complete) {
-                    ctx.globalAlpha = 0.35; // 透明度 (0.35 比较梦幻)
-                    ctx.globalCompositeOperation = 'screen'; // 混合模式：滤色 (让画面变亮，适合重曝)
-                    // 绘制图片铺满
-                    ctx.drawImage(activeFilterImg, 0, 0, canvas.width, canvas.height);
-                    
-                    // 重置画笔状态
-                    ctx.globalAlpha = 1.0;
-                    ctx.globalCompositeOperation = 'source-over';
-                }
 
                 createPolaroid(canvas.toDataURL('image/jpeg', 0.85));
             } catch(err) {
                 console.error(err);
-                alert("合成失败，可能是网络图片跨域问题");
+                alert("拍摄失败");
             }
         };
 
