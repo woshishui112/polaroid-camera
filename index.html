@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>复古拍立得 Pro</title>
-    <!-- 这里可以放你的 icon -->
-    <link rel="apple-touch-icon" href="icon.png">
+    <title>极速拍立得 Pro</title>
+    <link rel="apple-touch-icon" href="icon.png"> <!-- 记得确保你的图标还在 -->
     <style>
         :root {
             --cam-width: 240px;
@@ -21,19 +20,19 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #222; /* 稍微深一点的背景，突出科技感 */
+            background-color: #1a1a1a;
+            /* 科技感网格背景 */
             background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 30px 30px;
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, sans-serif;
             -webkit-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
         }
 
-        /* --- 照片墙 --- */
         #photo-wall {
             width: 100%;
             height: 100%;
@@ -44,7 +43,6 @@
             touch-action: none;
         }
 
-        /* --- 相机容器 --- */
         .camera-container {
             position: fixed;
             bottom: 40px;
@@ -55,16 +53,14 @@
             z-index: 100;
         }
 
-        /* --- 相机主体 --- */
         .camera-body {
             width: 100%;
             height: 100%;
-            background: #e8e8e8;
+            background: #e0e0e0;
             border-radius: 24px;
             box-shadow: 
-                0 20px 50px rgba(0,0,0,0.5),
-                inset 0 2px 5px rgba(255,255,255,0.8),
-                inset 0 -5px 10px rgba(0,0,0,0.1);
+                0 20px 50px rgba(0,0,0,0.6),
+                inset 0 2px 5px rgba(255,255,255,0.9);
             position: relative;
             display: flex;
             flex-direction: column;
@@ -72,24 +68,21 @@
             z-index: 102;
         }
 
-        /* 装饰条 */
         .stripe {
             width: 100%;
-            height: 16px;
-            /* 经典彩虹条 */
-            background: linear-gradient(to right, #ff5c5c 20%, #ffbd4a 20% 40%, #ffff68 40% 60%, #5ce25c 60% 80%, #5c9eff 80%);
+            height: 12px;
+            background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff);
             margin-top: 35px;
         }
 
-        /* 镜头区域 */
         .lens-area {
-            width: 120px;
-            height: 120px;
-            background: #111;
+            width: 124px;
+            height: 124px;
+            background: #000;
             border-radius: 50%;
             margin-top: 15px;
-            border: 4px solid #ccc;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            border: 3px solid #ccc;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
             overflow: hidden;
             position: relative;
             display: flex;
@@ -97,355 +90,21 @@
             align-items: center;
         }
 
-        /* 摄像头画面 - 已添加美颜滤镜 */
         video#camera-feed {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* 镜像 */
-            /* ✨ 美颜滤镜核心：增加亮度，降低对比度(柔和)，增加饱和度(红润) */
-            filter: brightness(1.1) contrast(0.95) saturate(1.1); 
+            transform: scaleX(-1);
+            /* ✨ 美颜滤镜：美白+磨皮效果 */
+            filter: brightness(1.15) contrast(0.95) saturate(1.1);
         }
 
-        /* 快门按钮 */
+        /* 红色快门按钮 */
         .shutter-btn {
             position: absolute;
-            right: 15px;
+            right: 18px;
             top: 75px;
-            width: 50px;
-            height: 50px;
+            width: 54px;
+            height: 54px;
             background: #ff3b30;
             border-radius: 50%;
-            border: 4px solid #ddd;
-            touch-action: manipulation;
-            box-shadow: 0 4px 0 #b3261e;
-            transition: transform 0.1s, box-shadow 0.1s;
-            z-index: 103;
-        }
-
-        .shutter-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b3261e;
-        }
-
-        /* 出纸口 */
-        .slot {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 190px;
-            height: 14px;
-            background: #000;
-            border-radius: 8px;
-            z-index: 101;
-        }
-
-        /* --- 拍立得照片 --- */
-        .polaroid {
-            position: absolute;
-            width: var(--paper-width);
-            height: var(--paper-height);
-            background: #fff;
-            padding: 12px 12px 50px 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            touch-action: none;
-            will-change: transform;
-        }
-
-        .polaroid-img {
-            width: 100%;
-            height: 156px;
-            background: #111;
-            overflow: hidden;
-        }
-
-        .polaroid-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* 删除按钮 */
-        .delete-btn {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 24px;
-            height: 24px;
-            background: #ff3b30;
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 22px;
-            font-size: 18px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1001;
-            display: none; /* 弹出动画时隐藏，拖拽时显示 */
-        }
-        
-        /* 显影动画 */
-        @keyframes develop {
-            0% { filter: brightness(3) blur(8px) grayscale(100%) contrast(50%); opacity: 0.8; }
-            50% { filter: brightness(1.2) blur(3px) sepia(30%); opacity: 1; }
-            100% { filter: none; }
-        }
-
-        .developing {
-            animation: develop 4s ease-out forwards;
-        }
-
-        /* 提示文字 */
-        .hint-text {
-            position: absolute;
-            width: 100%;
-            top: 15%;
-            text-align: center;
-            color: rgba(255,255,255,0.3);
-            font-size: 14px;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="photo-wall">
-        <div class="hint-text">点击红色按钮拍摄<br>照片可以拖动 / 点击红叉删除</div>
-    </div>
-
-    <div class="camera-container">
-        <div class="slot"></div>
-        <!-- 弹出层 -->
-        <div id="eject-layer" style="position: absolute; top: 0; left: 30px; width: 180px; height: 10px; z-index: 90;"></div>
-
-        <div class="camera-body">
-            <div class="stripe"></div>
-            <div class="lens-area">
-                <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
-            </div>
-            <button class="shutter-btn" id="shutter"></button>
-        </div>
-    </div>
-
-    <canvas id="capture-canvas" style="display: none;"></canvas>
-
-    <script>
-        const video = document.getElementById('camera-feed');
-        const canvas = document.getElementById('capture-canvas');
-        const shutterBtn = document.getElementById('shutter');
-        const ejectLayer = document.getElementById('eject-layer');
-        const photoWall = document.getElementById('photo-wall');
-
-        // --- 1. Web Audio API 音效引擎 (无需文件) ---
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
-
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            if (type === 'shutter') {
-                // 模拟快门声：短促的高频+噪音 (简化为短滴声)
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'motor') {
-                // 模拟出纸马达声：锯齿波
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(120, audioCtx.currentTime + 2);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 2);
-            }
-        }
-
-        // --- 2. 初始化摄像头 ---
-        async function initCamera() {
-            try {
-                // 强制请求 720p 以上清晰度，配合 CSS 滤镜实现美颜
-                const constraints = { 
-                    video: { 
-                        facingMode: "user",
-                        width: { ideal: 1280 },
-                        height: { ideal: 1280 }
-                    },
-                    audio: false 
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                video.onloadedmetadata = () => video.play();
-            } catch (err) {
-                console.error(err);
-                alert("请允许访问摄像头以使用相机。");
-            }
-        }
-        initCamera();
-
-        // --- 3. 拍摄与美颜处理 ---
-        shutterBtn.addEventListener('click', takePhoto);
-        shutterBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            takePhoto();
-        });
-
-        function takePhoto() {
-            if (!video.srcObject) return;
-            
-            // 播放快门音效
-            playSound('shutter');
-            
-            // 按钮动画
-            shutterBtn.style.transform = 'scale(0.9)';
-            setTimeout(() => shutterBtn.style.transform = 'none', 100);
-
-            // 绘制照片
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // 镜像处理
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
-            
-            // 在 Canvas 上也应用滤镜 (为了让保存的照片也有美颜效果)
-            ctx.filter = 'brightness(110%) contrast(95%) saturate(110%)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.filter = 'none'; // 重置
-
-            createPolaroid(canvas.toDataURL('image/jpeg', 0.9));
-        }
-
-        // --- 4. 生成照片 ---
-        function createPolaroid(imgUrl) {
-            // 播放马达声
-            playSound('motor');
-
-            const polaroid = document.createElement('div');
-            polaroid.className = 'polaroid';
-            
-            // 删除按钮
-            const deleteBtn = document.createElement('div');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '×';
-            // 删除事件
-            deleteBtn.addEventListener('touchstart', (e) => {
-                e.stopPropagation(); // 防止触发拖拽
-                if(confirm('确定要扔掉这张照片吗？')) {
-                    polaroid.remove();
-                }
-            });
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if(confirm('确定要扔掉这张照片吗？')) {
-                    polaroid.remove();
-                }
-            });
-
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'polaroid-img';
-            
-            const img = document.createElement('img');
-            img.src = imgUrl;
-            img.className = 'developing';
-            
-            imgContainer.appendChild(img);
-            polaroid.appendChild(imgContainer);
-            polaroid.appendChild(deleteBtn);
-            
-            ejectLayer.appendChild(polaroid);
-            
-            // 初始动画位置
-            polaroid.style.top = '10px';
-            polaroid.style.left = '0';
-            polaroid.style.transform = `rotate(0deg)`;
-            polaroid.style.transition = 'transform 2.5s cubic-bezier(0.25, 1, 0.5, 1)';
-            
-            // 强制重绘
-            polaroid.offsetHeight;
-
-            // 弹出
-            const randomAngle = (Math.random() * 6 - 3).toFixed(2);
-            polaroid.style.transform = `translateY(-240px) rotate(${randomAngle}deg)`;
-
-            // 2.5秒后允许拖拽并显示删除按钮
-            setTimeout(() => {
-                deleteBtn.style.display = 'block'; // 显示删除按钮
-                makeDraggable(polaroid);
-            }, 2500);
-        }
-
-        // --- 5. 拖拽逻辑 ---
-        function makeDraggable(elem) {
-            const rect = elem.getBoundingClientRect();
-            ejectLayer.removeChild(elem);
-            photoWall.appendChild(elem);
-
-            elem.style.position = 'absolute';
-            elem.style.left = rect.left + 'px';
-            elem.style.top = rect.top + 'px';
-            const currentTransform = getComputedStyle(elem).transform;
-            elem.style.transform = currentTransform === 'none' ? `rotate(${Math.random()*6-3}deg)` : currentTransform;
-            elem.style.transition = 'transform 0.2s, box-shadow 0.2s';
-
-            let isDragging = false;
-            let startX, startY, initialLeft, initialTop;
-
-            const getCoords = (e) => e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY};
-
-            const startDrag = (e) => {
-                if (e.target.classList.contains('delete-btn')) return; // 点删除按钮时不拖拽
-                if (e.touches && e.touches.length > 1) return;
-                
-                isDragging = true;
-                // 提到最上层
-                elem.style.zIndex = 999;
-                elem.style.transform = elem.style.transform.replace(/scale\([\d.]+\)/, '') + ' scale(1.05)';
-                
-                const coords = getCoords(e);
-                startX = coords.x;
-                startY = coords.y;
-                initialLeft = parseFloat(elem.style.left);
-                initialTop = parseFloat(elem.style.top);
-            };
-
-            const moveDrag = (e) => {
-                if (!isDragging) return;
-                if(e.cancelable) e.preventDefault();
-                const coords = getCoords(e);
-                elem.style.left = `${initialLeft + coords.x - startX}px`;
-                elem.style.top = `${initialTop + coords.y - startY}px`;
-            };
-
-            const endDrag = () => {
-                if (isDragging) {
-                    isDragging = false;
-                    elem.style.zIndex = 10;
-                    elem.style.transform = elem.style.transform.replace(' scale(1.05)', '');
-                }
-            };
-
-            elem.addEventListener('mousedown', startDrag);
-            window.addEventListener('mousemove', moveDrag);
-            window.addEventListener('mouseup', endDrag);
-            elem.addEventListener('touchstart', startDrag, {passive:false});
-            window.addEventListener('touchmove', moveDrag, {passive:false});
-            window.addEventListener('touchend', endDrag);
-        }
-    </script>
-</body>
-</html>
