@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <link rel="apple-touch-icon" href="icon.png">
     <meta charset="UTF-8">
-    <!-- 关键：禁止缩放，适配移动端视口 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>复古拍立得 - iOS版</title>
+    <meta name="theme-color" content="#000000">
+    <title>复古拍立得 Pro</title>
+    <!-- 这里可以放你的 icon -->
+    <link rel="apple-touch-icon" href="icon.png">
     <style>
         :root {
-            /* 稍微缩小一点尺寸以适应手机屏幕 */
             --cam-width: 240px;
             --cam-height: 220px;
             --paper-width: 180px;
@@ -21,19 +21,19 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #f0f0f0;
-            background-image: radial-gradient(#ddd 15%, transparent 16%),
-            radial-gradient(#ddd 15%, transparent 16%);
-            background-size: 40px 40px;
-            background-position: 0 0, 20px 20px;
-            overflow: hidden; /* 禁止页面滚动 */
+            background-color: #222; /* 稍微深一点的背景，突出科技感 */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-user-select: none; /* iOS 禁止选中文字 */
+            -webkit-user-select: none;
             user-select: none;
-            -webkit-touch-callout: none; /* 禁止长按菜单 */
+            -webkit-touch-callout: none;
         }
 
-        /* --- 照片墙区域 --- */
+        /* --- 照片墙 --- */
         #photo-wall {
             width: 100%;
             height: 100%;
@@ -41,59 +41,55 @@
             top: 0;
             left: 0;
             z-index: 1;
-            touch-action: none; /* 禁止在此区域触发默认触摸行为 */
+            touch-action: none;
         }
 
         /* --- 相机容器 --- */
         .camera-container {
             position: fixed;
-            bottom: 30px; /* 留出安全区 */
-            left: 50%; /* 手机上居中显示体验更好，或者保持 left:20px */
-            transform: translateX(-50%); /* 配合 left:50% 实现居中 */
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
             width: var(--cam-width);
             height: var(--cam-height);
             z-index: 100;
-        }
-        
-        /* 如果坚持要左下角，可以覆盖上面的样式 */
-        @media (min-width: 768px) {
-            .camera-container {
-                left: 30px;
-                transform: none;
-            }
         }
 
         /* --- 相机主体 --- */
         .camera-body {
             width: 100%;
             height: 100%;
-            background: #f4f1ea;
-            border-radius: 20px;
-            box-shadow: 5px 10px 20px rgba(0,0,0,0.2), 
-                        inset 0 0 20px rgba(0,0,0,0.05);
+            background: #e8e8e8;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.5),
+                inset 0 2px 5px rgba(255,255,255,0.8),
+                inset 0 -5px 10px rgba(0,0,0,0.1);
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             z-index: 102;
-            border-bottom: 8px solid #dcd9d2;
         }
 
+        /* 装饰条 */
         .stripe {
             width: 100%;
-            height: 18px;
+            height: 16px;
+            /* 经典彩虹条 */
             background: linear-gradient(to right, #ff5c5c 20%, #ffbd4a 20% 40%, #ffff68 40% 60%, #5ce25c 60% 80%, #5c9eff 80%);
             margin-top: 35px;
         }
 
+        /* 镜头区域 */
         .lens-area {
             width: 120px;
             height: 120px;
-            background: #222;
+            background: #111;
             border-radius: 50%;
-            margin-top: 10px;
-            border: 6px solid #e0e0e0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-top: 15px;
+            border: 4px solid #ccc;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             overflow: hidden;
             position: relative;
             display: flex;
@@ -101,73 +97,69 @@
             align-items: center;
         }
 
-        /* iOS 必须加上 playsinline 避免自动全屏 */
+        /* 摄像头画面 - 已添加美颜滤镜 */
         video#camera-feed {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); 
-            background: #000;
+            transform: scaleX(-1); /* 镜像 */
+            /* ✨ 美颜滤镜核心：增加亮度，降低对比度(柔和)，增加饱和度(红润) */
+            filter: brightness(1.1) contrast(0.95) saturate(1.1); 
         }
 
+        /* 快门按钮 */
         .shutter-btn {
             position: absolute;
             right: 15px;
-            top: 70px;
-            width: 46px;
-            height: 46px;
-            background: #ff4444;
+            top: 75px;
+            width: 50px;
+            height: 50px;
+            background: #ff3b30;
             border-radius: 50%;
-            border: 3px solid #dcd9d2;
-            /* 增大触摸热区 */
-            touch-action: manipulation; 
-            box-shadow: 0 3px 0 #cc0000;
+            border: 4px solid #ddd;
+            touch-action: manipulation;
+            box-shadow: 0 4px 0 #b3261e;
             transition: transform 0.1s, box-shadow 0.1s;
             z-index: 103;
         }
 
         .shutter-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 #cc0000;
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b3261e;
         }
 
+        /* 出纸口 */
         .slot {
             position: absolute;
-            top: -6px;
+            top: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 190px;
-            height: 12px;
-            background: #1a1a1a;
-            border-radius: 6px;
+            height: 14px;
+            background: #000;
+            border-radius: 8px;
             z-index: 101;
         }
 
-        /* --- 拍立得相纸 --- */
+        /* --- 拍立得照片 --- */
         .polaroid {
             position: absolute;
             width: var(--paper-width);
             height: var(--paper-height);
             background: #fff;
-            padding: 12px 12px 45px 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            padding: 12px 12px 50px 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             box-sizing: border-box;
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            transform-origin: center;
-            /* 关键：让 iOS 知道这个元素需要处理触摸 */
-            touch-action: none; 
-        }
-        
-        .polaroid:active {
-            z-index: 1000 !important;
-            transform: scale(1.05);
+            touch-action: none;
+            will-change: transform;
         }
 
         .polaroid-img {
             width: 100%;
-            height: 156px; /* 180 width - 24 padding */
+            height: 156px;
             background: #111;
             overflow: hidden;
         }
@@ -178,37 +170,56 @@
             object-fit: cover;
         }
 
-        /* 动画 */
+        /* 删除按钮 */
+        .delete-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1001;
+            display: none; /* 弹出动画时隐藏，拖拽时显示 */
+        }
+        
+        /* 显影动画 */
         @keyframes develop {
-            0% { filter: brightness(3) blur(10px) grayscale(100%) contrast(50%); opacity: 0.9; }
-            50% { filter: brightness(1.2) blur(4px) sepia(40%); opacity: 1; }
+            0% { filter: brightness(3) blur(8px) grayscale(100%) contrast(50%); opacity: 0.8; }
+            50% { filter: brightness(1.2) blur(3px) sepia(30%); opacity: 1; }
             100% { filter: none; }
         }
 
         .developing {
-            animation: develop 5s ease-out forwards;
+            animation: develop 4s ease-out forwards;
         }
-        
+
         /* 提示文字 */
         .hint-text {
-            position: absolute; 
-            top: 10%; 
-            width: 100%; 
-            text-align: center; 
-            color: #999; 
-            font-size: 16px; 
+            position: absolute;
+            width: 100%;
+            top: 15%;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 14px;
             pointer-events: none;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
         }
     </style>
 </head>
 <body>
 
     <div id="photo-wall">
-        <div class="hint-text">点击红色按钮拍摄<br>拖动照片贴在墙上</div>
+        <div class="hint-text">点击红色按钮拍摄<br>照片可以拖动 / 点击红叉删除</div>
     </div>
 
-    <div class="camera-container" id="camera">
+    <div class="camera-container">
         <div class="slot"></div>
         <!-- 弹出层 -->
         <div id="eject-layer" style="position: absolute; top: 0; left: 30px; width: 180px; height: 10px; z-index: 90;"></div>
@@ -216,7 +227,6 @@
         <div class="camera-body">
             <div class="stripe"></div>
             <div class="lens-area">
-                <!-- playsinline 是 iOS 必须的 -->
                 <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
             </div>
             <button class="shutter-btn" id="shutter"></button>
@@ -232,80 +242,120 @@
         const ejectLayer = document.getElementById('eject-layer');
         const photoWall = document.getElementById('photo-wall');
 
-        // 1. 初始化摄像头 (iOS 兼容写法)
-        async function initCamera() {
-            // 检查浏览器支持
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("您的浏览器不支持摄像头，请使用 Safari 或 Chrome。");
-                return;
-            }
+        // --- 1. Web Audio API 音效引擎 (无需文件) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
 
-            try {
-                // iOS 往往对 ideal 分辨率支持更好，强行指定 width/height 可能会报错
-                const constraints = { 
-                    video: { 
-                        facingMode: "user", // 前置摄像头
-                        width: { ideal: 640 },
-                        height: { ideal: 640 }
-                    },
-                    audio: false 
-                };
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
 
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                // 确保 iOS 上视频开始播放
-                video.onloadedmetadata = () => {
-                    video.play();
-                };
-            } catch (err) {
-                console.error(err);
-                if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                    alert("iOS 安全限制：请在 HTTPS 环境下运行网页才能使用摄像头！");
-                } else {
-                    alert("无法访问摄像头，请在设置中允许网页访问摄像头。");
-                }
+            if (type === 'shutter') {
+                // 模拟快门声：短促的高频+噪音 (简化为短滴声)
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'motor') {
+                // 模拟出纸马达声：锯齿波
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(120, audioCtx.currentTime + 2);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 2);
             }
         }
 
+        // --- 2. 初始化摄像头 ---
+        async function initCamera() {
+            try {
+                // 强制请求 720p 以上清晰度，配合 CSS 滤镜实现美颜
+                const constraints = { 
+                    video: { 
+                        facingMode: "user",
+                        width: { ideal: 1280 },
+                        height: { ideal: 1280 }
+                    },
+                    audio: false 
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.onloadedmetadata = () => video.play();
+            } catch (err) {
+                console.error(err);
+                alert("请允许访问摄像头以使用相机。");
+            }
+        }
         initCamera();
 
-        // 2. 拍摄
-        // 使用 touchstart 提升响应速度，但也保留 click 兼容桌面
+        // --- 3. 拍摄与美颜处理 ---
         shutterBtn.addEventListener('click', takePhoto);
         shutterBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // 防止触发 click
+            e.preventDefault();
             takePhoto();
         });
 
         function takePhoto() {
             if (!video.srcObject) return;
             
-            // 简单的按钮反馈动画
-            shutterBtn.style.transform = 'translateY(3px)';
+            // 播放快门音效
+            playSound('shutter');
+            
+            // 按钮动画
+            shutterBtn.style.transform = 'scale(0.9)';
             setTimeout(() => shutterBtn.style.transform = 'none', 100);
 
-            // 截图
+            // 绘制照片
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             
-            // 镜像翻转
+            // 镜像处理
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
+            
+            // 在 Canvas 上也应用滤镜 (为了让保存的照片也有美颜效果)
+            ctx.filter = 'brightness(110%) contrast(95%) saturate(110%)';
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.filter = 'none'; // 重置
 
-            createPolaroid(canvas.toDataURL('image/jpeg', 0.8));
+            createPolaroid(canvas.toDataURL('image/jpeg', 0.9));
         }
 
-        // 3. 创建照片
+        // --- 4. 生成照片 ---
         function createPolaroid(imgUrl) {
+            // 播放马达声
+            playSound('motor');
+
             const polaroid = document.createElement('div');
             polaroid.className = 'polaroid';
             
-            // 随机微小的初始角度
-            const rotation = (Math.random() * 6 - 3).toFixed(2);
-            
+            // 删除按钮
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            // 删除事件
+            deleteBtn.addEventListener('touchstart', (e) => {
+                e.stopPropagation(); // 防止触发拖拽
+                if(confirm('确定要扔掉这张照片吗？')) {
+                    polaroid.remove();
+                }
+            });
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(confirm('确定要扔掉这张照片吗？')) {
+                    polaroid.remove();
+                }
+            });
+
             const imgContainer = document.createElement('div');
             imgContainer.className = 'polaroid-img';
             
@@ -315,100 +365,87 @@
             
             imgContainer.appendChild(img);
             polaroid.appendChild(imgContainer);
+            polaroid.appendChild(deleteBtn);
+            
             ejectLayer.appendChild(polaroid);
             
-            // 初始位置
+            // 初始动画位置
             polaroid.style.top = '10px';
             polaroid.style.left = '0';
             polaroid.style.transform = `rotate(0deg)`;
-            polaroid.style.transition = 'transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            polaroid.style.transition = 'transform 2.5s cubic-bezier(0.25, 1, 0.5, 1)';
             
             // 强制重绘
             polaroid.offsetHeight;
 
-            // 弹出动画
-            polaroid.style.transform = `translateY(-230px) rotate(${rotation}deg)`;
+            // 弹出
+            const randomAngle = (Math.random() * 6 - 3).toFixed(2);
+            polaroid.style.transform = `translateY(-240px) rotate(${randomAngle}deg)`;
 
-            // 动画结束后启用拖拽
+            // 2.5秒后允许拖拽并显示删除按钮
             setTimeout(() => {
+                deleteBtn.style.display = 'block'; // 显示删除按钮
                 makeDraggable(polaroid);
-            }, 2000);
+            }, 2500);
         }
 
-        // 4. 拖拽逻辑 (同时支持 Touch 和 Mouse)
+        // --- 5. 拖拽逻辑 ---
         function makeDraggable(elem) {
             const rect = elem.getBoundingClientRect();
-            
-            // 移动到照片墙层级
             ejectLayer.removeChild(elem);
             photoWall.appendChild(elem);
 
             elem.style.position = 'absolute';
             elem.style.left = rect.left + 'px';
             elem.style.top = rect.top + 'px';
-            // 保持刚才弹出的角度
             const currentTransform = getComputedStyle(elem).transform;
-            // 如果需要保持旋转，解析 transform 比较复杂，这里简化为随机角度让它看起来自然
-            elem.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
-            elem.style.transition = 'none'; 
+            elem.style.transform = currentTransform === 'none' ? `rotate(${Math.random()*6-3}deg)` : currentTransform;
+            elem.style.transition = 'transform 0.2s, box-shadow 0.2s';
 
             let isDragging = false;
             let startX, startY, initialLeft, initialTop;
 
-            // 获取坐标的通用函数
-            const getCoords = (e) => {
-                if (e.touches && e.touches.length > 0) {
-                    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                }
-                return { x: e.clientX, y: e.clientY };
-            };
+            const getCoords = (e) => e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY};
 
             const startDrag = (e) => {
-                // 如果是多指操作（缩放等），不触发拖拽
+                if (e.target.classList.contains('delete-btn')) return; // 点删除按钮时不拖拽
                 if (e.touches && e.touches.length > 1) return;
-
+                
                 isDragging = true;
+                // 提到最上层
                 elem.style.zIndex = 999;
+                elem.style.transform = elem.style.transform.replace(/scale\([\d.]+\)/, '') + ' scale(1.05)';
                 
                 const coords = getCoords(e);
                 startX = coords.x;
                 startY = coords.y;
-                
                 initialLeft = parseFloat(elem.style.left);
                 initialTop = parseFloat(elem.style.top);
             };
 
             const moveDrag = (e) => {
                 if (!isDragging) return;
-                // 阻止默认滚动行为
                 if(e.cancelable) e.preventDefault();
-
                 const coords = getCoords(e);
-                const dx = coords.x - startX;
-                const dy = coords.y - startY;
-
-                elem.style.left = `${initialLeft + dx}px`;
-                elem.style.top = `${initialTop + dy}px`;
+                elem.style.left = `${initialLeft + coords.x - startX}px`;
+                elem.style.top = `${initialTop + coords.y - startY}px`;
             };
 
             const endDrag = () => {
                 if (isDragging) {
                     isDragging = false;
                     elem.style.zIndex = 10;
+                    elem.style.transform = elem.style.transform.replace(' scale(1.05)', '');
                 }
             };
 
-            // 绑定鼠标事件
             elem.addEventListener('mousedown', startDrag);
             window.addEventListener('mousemove', moveDrag);
             window.addEventListener('mouseup', endDrag);
-
-            // 绑定触摸事件 (iOS 核心)
-            elem.addEventListener('touchstart', startDrag, { passive: false });
-            window.addEventListener('touchmove', moveDrag, { passive: false });
+            elem.addEventListener('touchstart', startDrag, {passive:false});
+            window.addEventListener('touchmove', moveDrag, {passive:false});
             window.addEventListener('touchend', endDrag);
         }
     </script>
 </body>
 </html>
-
