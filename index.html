@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>极速拍立得 Pro</title>
-    <link rel="apple-touch-icon" href="icon.png"> <!-- 记得确保你的图标还在 -->
+    <title>极速拍立得 Pro (修复版)</title>
+    <link rel="apple-touch-icon" href="icon.png">
     <style>
         :root {
             --cam-width: 240px;
@@ -14,205 +14,41 @@
             --paper-width: 180px;
             --paper-height: 216px;
         }
-
         body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
             background-color: #1a1a1a;
-            /* 科技感网格背景 */
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
             background-size: 40px 40px;
-            overflow: hidden;
-            font-family: -apple-system, sans-serif;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
+            overflow: hidden; font-family: -apple-system, sans-serif;
+            -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
-
-        #photo-wall {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            touch-action: none;
-        }
-
-        .camera-container {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: var(--cam-width);
-            height: var(--cam-height);
-            z-index: 100;
-        }
-
-        .camera-body {
-            width: 100%;
-            height: 100%;
-            background: #e0e0e0;
-            border-radius: 24px;
-            box-shadow: 
-                0 20px 50px rgba(0,0,0,0.6),
-                inset 0 2px 5px rgba(255,255,255,0.9);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 102;
-        }
-
-        .stripe {
-            width: 100%;
-            height: 12px;
-            background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff);
-            margin-top: 35px;
-        }
-
-        .lens-area {
-            width: 124px;
-            height: 124px;
-            background: #000;
-            border-radius: 50%;
-            margin-top: 15px;
-            border: 3px solid #ccc;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        video#camera-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-            /* ✨ 美颜滤镜：美白+磨皮效果 */
-            filter: brightness(1.15) contrast(0.95) saturate(1.1);
-        }
-
-        /* 红色快门按钮 */
-        .shutter-btn {
-            position: absolute;
-            right: 18px;
-            top: 75px;
-            width: 54px;
-            height: 54px;
-            background: #ff3b30;
-            border-radius: 50%;
-            border: 4px solid #d1d1d6;
-            touch-action: manipulation;
-            box-shadow: 0 4px 0 #b0261e;
-            transition: transform 0.05s, box-shadow 0.05s;
-            z-index: 103;
-        }
-
-        .shutter-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b0261e;
-        }
-
-        .slot {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 190px;
-            height: 14px;
-            background: #000;
-            border-radius: 8px;
-            z-index: 101;
-        }
-
-        .polaroid {
-            position: absolute;
-            width: var(--paper-width);
-            height: var(--paper-height);
-            background: #fff;
-            padding: 12px 12px 50px 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            touch-action: none;
-            will-change: transform;
-        }
-
-        .polaroid-img {
-            width: 100%;
-            height: 156px;
-            background: #222;
-            overflow: hidden;
-        }
-
-        .polaroid-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            width: 28px;
-            height: 28px;
-            background: #ff3b30;
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 26px;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            cursor: pointer;
-            z-index: 1001;
-            display: none;
-            border: 2px solid #fff;
-        }
-        
-        /* 🚀 极速显影动画 (1.5秒完成) */
-        @keyframes develop {
-            0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; }
-            40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; }
-            100% { filter: none; opacity: 1; }
-        }
-
-        .developing {
-            animation: develop 1.5s ease-out forwards;
-        }
-
-        .hint-text {
-            position: absolute;
-            width: 100%;
-            top: 15%;
-            text-align: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 14px;
-            pointer-events: none;
-            letter-spacing: 1px;
-        }
+        #photo-wall { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; touch-action: none; }
+        .camera-container { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: var(--cam-width); height: var(--cam-height); z-index: 100; }
+        .camera-body { width: 100%; height: 100%; background: #e0e0e0; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.9); position: relative; display: flex; flex-direction: column; align-items: center; z-index: 102; }
+        .stripe { width: 100%; height: 12px; background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff); margin-top: 35px; }
+        .lens-area { width: 124px; height: 124px; background: #000; border-radius: 50%; margin-top: 15px; border: 3px solid #ccc; box-shadow: 0 5px 20px rgba(0,0,0,0.5); overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; }
+        video#camera-feed { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: brightness(1.15) contrast(0.95) saturate(1.1); background: #000; }
+        .shutter-btn { position: absolute; right: 18px; top: 75px; width: 54px; height: 54px; background: #ff3b30; border-radius: 50%; border: 4px solid #d1d1d6; touch-action: manipulation; box-shadow: 0 4px 0 #b0261e; transition: transform 0.05s, box-shadow 0.05s; z-index: 103; }
+        .shutter-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #b0261e; }
+        .slot { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 190px; height: 14px; background: #000; border-radius: 8px; z-index: 101; }
+        .polaroid { position: absolute; width: var(--paper-width); height: var(--paper-height); background: #fff; padding: 12px 12px 50px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start; touch-action: none; will-change: transform; }
+        .polaroid-img { width: 100%; height: 156px; background: #222; overflow: hidden; }
+        .polaroid-img img { width: 100%; height: 100%; object-fit: cover; }
+        .delete-btn { position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; background: #ff3b30; color: white; border-radius: 50%; text-align: center; line-height: 26px; font-size: 20px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 1001; display: none; border: 2px solid #fff; }
+        @keyframes develop { 0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; } 40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; } 100% { filter: none; opacity: 1; } }
+        .developing { animation: develop 1.5s ease-out forwards; }
+        .hint-text { position: absolute; width: 100%; top: 15%; text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; pointer-events: none; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div id="photo-wall">
-        <div class="hint-text">READY TO SHOOT</div>
+        <div class="hint-text" id="status-text">点击红色按钮拍照</div>
     </div>
 
     <div class="camera-container">
         <div class="slot"></div>
         <div id="eject-layer" style="position: absolute; top: 0; left: 30px; width: 180px; height: 10px; z-index: 90;"></div>
-
         <div class="camera-body">
             <div class="stripe"></div>
             <div class="lens-area">
@@ -230,33 +66,222 @@
         const shutterBtn = document.getElementById('shutter');
         const ejectLayer = document.getElementById('eject-layer');
         const photoWall = document.getElementById('photo-wall');
+        const statusText = document.getElementById('status-text');
 
-        // --- 1. 拟真音效引擎 (Web Audio API) ---
-        // 这里模拟真实的机械快门“咔嚓”声，而不是电子滴声
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+        // --- 1. 安全的音效系统 (出错也不会卡死) ---
+        let audioCtx;
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+        } catch(e) {
+            console.warn("AudioContext unsupported");
+        }
 
-        // 创建白噪音 buffer (用于模拟机械撞击/快门声)
         function createNoiseBuffer() {
-            const bufferSize = audioCtx.sampleRate * 2; // 2秒缓冲区
+            if(!audioCtx) return null;
+            const bufferSize = audioCtx.sampleRate * 2;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
             return buffer;
         }
         const noiseBuffer = createNoiseBuffer();
 
         function playShutterSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const t = audioCtx.currentTime;
+            if(!audioCtx) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const t = audioCtx.currentTime;
+                // 快门声
+                const noise1 = audioCtx.createBufferSource();
+                noise1.buffer = noiseBuffer;
+                const gain1 = audioCtx.createGain();
+                gain1.gain.setValueAtTime(0.8, t);
+                gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+                noise1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                noise1.start(t);
+                noise1.stop(t + 0.05);
+            } catch(e) { console.log("Audio play failed, ignoring..."); }
+        }
 
-            // 声音1：高频“咔” (快门开启)
-            const noise1 = audioCtx.createBufferSource();
-            noise1.buffer = noiseBuffer;
-            const filter1 = audioCtx.createBiquadFilter();
-            filter1.type = 'highpass';
-            filter1.frequency.value = 1000;
-            const gain1 = audioCtx.createGain();
-            gain1.gain.setValueAtTime(0.8, t);
+        function playMotorSound() {
+            if(!audioCtx) return;
+            try {
+                const t = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.linearRampToValueAtTime(100, t + 0.6);
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.6);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(t);
+                osc.stop(t + 0.6);
+            } catch(e) {}
+        }
+
+        // --- 2. 初始化摄像头 (带错误提示) ---
+        async function initCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("浏览器不支持摄像头，请用Safari打开");
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1280 } },
+                    audio: false 
+                });
+                video.srcObject = stream;
+                // 确保视频播放
+                video.onloadedmetadata = () => {
+                    video.play().catch(e => console.log("Video play error:", e));
+                    statusText.innerText = "准备就绪";
+                    setTimeout(() => statusText.style.display = 'none', 2000);
+                };
+            } catch (err) {
+                console.error(err);
+                statusText.innerText = "摄像头启动失败: " + err.name;
+                alert("无法启动摄像头！请检查：\n1. 是否允许了权限？\n2. 必须是HTTPS链接");
+            }
+        }
+        initCamera();
+
+        // --- 3. 拍摄逻辑 (加强版) ---
+        const handleShoot = (e) => {
+            if(e.cancelable) e.preventDefault();
+            
+            // 如果摄像头没画面，尝试重新播放
+            if (!video.srcObject) {
+                // 可能是没加载好，忽略这次点击
+                return;
+            }
+
+            // 1. 先尝试放声音 (放在 try-catch 里，防止声音报错导致后面不执行)
+            try { playShutterSound(); } catch(e){}
+            
+            // 2. 按钮动画
+            shutterBtn.style.transform = 'scale(0.85)';
+            setTimeout(() => shutterBtn.style.transform = 'none', 80);
+
+            // 3. 核心拍照逻辑
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                if(canvas.width === 0) return; // 防止空画面
+
+                const ctx = canvas.getContext('2d');
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.filter = 'brightness(115%) contrast(95%) saturate(110%)';
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none';
+
+                createPolaroid(canvas.toDataURL('image/jpeg', 0.8));
+            } catch(err) {
+                alert("拍照出错: " + err.message);
+            }
+        };
+
+        shutterBtn.addEventListener('click', handleShoot);
+        shutterBtn.addEventListener('touchstart', handleShoot);
+
+        // --- 4. 生成照片 ---
+        function createPolaroid(imgUrl) {
+            setTimeout(playMotorSound, 100);
+
+            const polaroid = document.createElement('div');
+            polaroid.className = 'polaroid';
+            
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            const removePhoto = (e) => {
+                e.stopPropagation();
+                if(confirm('删除这张？')) polaroid.remove();
+            };
+            deleteBtn.addEventListener('touchstart', removePhoto);
+            deleteBtn.addEventListener('click', removePhoto);
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'polaroid-img';
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.className = 'developing';
+            
+            imgContainer.appendChild(img);
+            polaroid.appendChild(imgContainer);
+            polaroid.appendChild(deleteBtn);
+            ejectLayer.appendChild(polaroid);
+            
+            polaroid.style.top = '10px';
+            polaroid.style.left = '0';
+            polaroid.style.transform = `rotate(0deg)`;
+            polaroid.style.transition = 'transform 0.6s cubic-bezier(0.1, 0.9, 0.2, 1)'; 
+            
+            polaroid.offsetHeight; 
+
+            const randomAngle = (Math.random() * 8 - 4).toFixed(2);
+            polaroid.style.transform = `translateY(-240px) rotate(${randomAngle}deg)`;
+
+            setTimeout(() => {
+                deleteBtn.style.display = 'block';
+                makeDraggable(polaroid);
+            }, 700);
+        }
+
+        // --- 5. 拖拽逻辑 ---
+        function makeDraggable(elem) {
+            const rect = elem.getBoundingClientRect();
+            ejectLayer.removeChild(elem);
+            photoWall.appendChild(elem);
+
+            elem.style.position = 'absolute';
+            elem.style.left = rect.left + 'px';
+            elem.style.top = rect.top + 'px';
+            elem.style.transform = `rotate(${Math.random()*6-3}deg)`; 
+            elem.style.transition = 'transform 0.2s';
+
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+            const getCoords = (e) => e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY};
+
+            const startDrag = (e) => {
+                if (e.target.classList.contains('delete-btn')) return;
+                isDragging = true;
+                elem.style.zIndex = 999;
+                elem.style.transform = elem.style.transform + ' scale(1.05)';
+                const coords = getCoords(e);
+                startX = coords.x;
+                startY = coords.y;
+                initialLeft = parseFloat(elem.style.left);
+                initialTop = parseFloat(elem.style.top);
+            };
+
+            const moveDrag = (e) => {
+                if (!isDragging) return;
+                if(e.cancelable) e.preventDefault();
+                const coords = getCoords(e);
+                elem.style.left = `${initialLeft + coords.x - startX}px`;
+                elem.style.top = `${initialTop + coords.y - startY}px`;
+            };
+
+            const endDrag = () => {
+                if (isDragging) {
+                    isDragging = false;
+                    elem.style.zIndex = 10;
+                    elem.style.transform = elem.style.transform.replace(' scale(1.05)', '');
+                }
+            };
+            elem.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('mouseup', endDrag);
+            elem.addEventListener('touchstart', startDrag, {passive:false});
+            window.addEventListener('touchmove', moveDrag, {passive:false});
+            window.addEventListener('touchend', endDrag);
+        }
+    </script>
+</body>
+</html>
