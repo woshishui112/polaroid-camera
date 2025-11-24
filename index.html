@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>ProCam 调色大师</title>
+    <title>环球旅行相机 Pro</title>
     <link rel="apple-touch-icon" href="icon.png">
     <style>
         :root {
-            --cam-width: 300px; /* 加宽相机机身以容纳两侧按钮 */
+            --cam-width: 300px;
             --cam-height: 220px;
             --paper-width: 180px;
             --paper-height: 216px;
@@ -17,60 +17,79 @@
         body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
             background-color: #111;
-            /* 更有质感的暗色背景 */
-            background-image: radial-gradient(circle at center, #222 0%, #000 100%);
+            /* 更有质感的背景 */
+            background-image: radial-gradient(circle at center, #2a2a2a 0%, #000 100%);
             overflow: hidden; font-family: -apple-system, sans-serif;
             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
         #photo-wall { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; touch-action: none; }
         
-        /* 相机容器 */
         .camera-container { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: var(--cam-width); height: var(--cam-height); z-index: 100; }
         
         .camera-body { 
-            width: 100%; height: 100%; background: #dcdcdc; border-radius: 28px; 
+            width: 100%; height: 100%; background: #e0e0e0; border-radius: 28px; 
             box-shadow: 0 25px 60px rgba(0,0,0,0.7), inset 0 2px 5px rgba(255,255,255,0.9); 
             position: relative; display: flex; justify-content: center; align-items: center; z-index: 102; 
         }
 
-        /* 装饰条 */
         .stripe { 
-            position: absolute; top: 20px; width: 100%; height: 8px; 
+            position: absolute; top: 22px; width: 100%; height: 8px; 
             background: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #007aff); 
             z-index: 0;
         }
         
-        /* 镜头区域 (居中) */
+        /* 镜头区域 */
         .lens-area { 
             width: 130px; height: 130px; background: #000; border-radius: 50%; 
-            border: 4px solid #bbb; box-shadow: 0 5px 25px rgba(0,0,0,0.5); overflow: hidden; 
+            border: 4px solid #ccc; box-shadow: 0 5px 25px rgba(0,0,0,0.5); overflow: hidden; 
             position: relative; z-index: 10; display: flex; justify-content: center; align-items: center;
         }
         
-        video#camera-feed { 
-            width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); 
-            background: #000; transition: filter 0.3s ease; /* 滤镜切换动画 */
+        .video-wrapper {
+            width: 100%; height: 100%; position: relative;
         }
 
-        /* --- 左侧：滤镜选择栏 --- */
+        video#camera-feed { 
+            width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); 
+            background: #000; filter: brightness(1.1); /* 稍微提亮一点人脸 */
+        }
+
+        /* 风景叠加层 (预览用) */
+        #scene-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            opacity: 0.4; /* 半透明 */
+            mix-blend-mode: screen; /* 滤色模式：让风景融入暗部 */
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            transform: scaleX(-1); /* 保持镜像 */
+        }
+
+        /* --- 左侧：风景选择器 --- */
         .controls-left {
             position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 10px;
             z-index: 20;
         }
 
-        .filter-btn {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #333; border: 2px solid #fff;
+        .scene-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            background-color: #333; background-size: cover; background-position: center;
+            border: 2px solid #fff;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            color: #fff; font-size: 10px; display: flex; justify-content: center; align-items: center;
-            font-weight: bold; cursor: pointer; transition: transform 0.1s, background 0.2s;
+            cursor: pointer; transition: transform 0.1s, border-color 0.2s;
+            position: relative;
         }
-        .filter-btn.active {
-            border-color: #ff3b30; transform: scale(1.15); background: #000; color: #ff3b30;
+        .scene-btn.active {
+            border-color: #ff3b30; transform: scale(1.15); box-shadow: 0 0 10px #ff3b30;
+        }
+        /* “无”按钮 */
+        .scene-btn.none-btn {
+            background: #444; display: flex; justify-content: center; align-items: center;
+            color: #fff; font-size: 10px; font-weight: bold;
         }
 
-        /* --- 右侧：快门区域 --- */
+        /* --- 右侧：快门 --- */
         .controls-right {
             position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
             z-index: 20;
@@ -84,10 +103,8 @@
         }
         .shutter-btn:active { transform: scale(0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
         
-        /* 出纸口 */
-        .slot { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 200px; height: 12px; background: #111; border-radius: 6px; z-index: 101; }
-        
         /* 拍立得照片 */
+        .slot { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 200px; height: 12px; background: #111; border-radius: 6px; z-index: 101; }
         .polaroid { 
             position: absolute; width: var(--paper-width); height: var(--paper-height); background: #fff; 
             padding: 12px 12px 50px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
@@ -97,38 +114,17 @@
         .polaroid-img { width: 100%; height: 156px; background: #222; overflow: hidden; }
         .polaroid-img img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* 删除按钮 */
-        .delete-btn { 
-            position: absolute; top: -15px; right: -15px; width: 30px; height: 30px; 
-            background: #ff3b30; color: white; border-radius: 50%; text-align: center; 
-            line-height: 28px; font-size: 20px; font-weight: bold; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 1001; 
-            display: none; border: 2px solid #fff; 
-        }
+        .delete-btn { position: absolute; top: -15px; right: -15px; width: 30px; height: 30px; background: #ff3b30; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 20px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 1001; display: none; border: 2px solid #fff; }
         
-        /* 显影动画 */
-        @keyframes develop { 
-            0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; } 
-            40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; } 
-            100% { filter: none; opacity: 1; } 
-        }
+        @keyframes develop { 0% { filter: brightness(5) blur(10px) grayscale(100%); opacity: 0.5; } 40% { filter: brightness(1.5) blur(2px) sepia(50%); opacity: 0.9; } 100% { filter: none; opacity: 1; } }
         .developing { animation: develop 1.5s ease-out forwards; }
-        
-        /* 提示文字 */
         .hint-text { position: absolute; width: 100%; top: 15%; text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; pointer-events: none; letter-spacing: 1px; }
-        
-        /* 颗粒感叠加层 (增加胶片质感) */
-        .grain-overlay {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
-            opacity: 0.4; pointer-events: none; mix-blend-mode: overlay; z-index: 11;
-        }
     </style>
 </head>
 <body>
 
     <div id="photo-wall">
-        <div class="hint-text" id="status-text">左侧选滤镜 · 右侧按快门</div>
+        <div class="hint-text" id="status-text">左侧选择风景 · 右侧拍照</div>
     </div>
 
     <div class="camera-container">
@@ -138,25 +134,39 @@
         <div class="camera-body">
             <div class="stripe"></div>
             
-            <!-- 左侧：滤镜按钮组 -->
+            <!-- 左侧：风景缩略图按钮 -->
             <div class="controls-left">
-                <!-- 原片 -->
-                <div class="filter-btn active" onclick="setFilter('none', this)" style="background:#555">原</div>
-                <!-- 胶片 (暖色复古) -->
-                <div class="filter-btn" onclick="setFilter('vintage', this)" style="background:#d4a868; color:#000">胶</div>
-                <!-- 黑白 (高对比) -->
-                <div class="filter-btn" onclick="setFilter('bw', this)" style="background:#222">黑</div>
-                <!-- 冷白 (清新) -->
-                <div class="filter-btn" onclick="setFilter('cool', this)" style="background:#aaddff; color:#000">冷</div>
-                <!-- 港风 (高饱和暗调) -->
-                <div class="filter-btn" onclick="setFilter('hk', this)" style="background:#800020; color:#fff">港</div>
+                <!-- 无风景 -->
+                <div class="scene-btn none-btn active" onclick="setScene(null, this)">无</div>
+                
+                <!-- 1. 巴黎铁塔 -->
+                <div class="scene-btn" onclick="setScene('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80', this)" 
+                     style="background-image: url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=100&q=60')"></div>
+                
+                <!-- 2. 马尔代夫落日 -->
+                <div class="scene-btn" onclick="setScene('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80', this)" 
+                     style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100&q=60')"></div>
+
+                <!-- 3. 赛博朋克霓虹 -->
+                <div class="scene-btn" onclick="setScene('https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=400&q=80', this)" 
+                     style="background-image: url('https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=100&q=60')"></div>
+                
+                <!-- 4. 冰岛极光 -->
+                <div class="scene-btn" onclick="setScene('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&q=80', this)" 
+                     style="background-image: url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=100&q=60')"></div>
+                     
+                <!-- 5. 阿尔卑斯雪山 -->
+                <div class="scene-btn" onclick="setScene('https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80', this)" 
+                     style="background-image: url('https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=100&q=60')"></div>
             </div>
 
             <!-- 中间：镜头 -->
             <div class="lens-area">
-                <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
-                <!-- 胶片颗粒层 -->
-                <div class="grain-overlay"></div>
+                <div class="video-wrapper">
+                    <video id="camera-feed" autoplay playsinline webkit-playsinline muted></video>
+                    <!-- 风景叠加层 -->
+                    <div id="scene-overlay"></div>
+                </div>
             </div>
 
             <!-- 右侧：快门 -->
@@ -166,6 +176,8 @@
         </div>
     </div>
 
+    <!-- 隐藏图片元素用于合成 -->
+    <img id="active-scene-img" crossorigin="anonymous" style="display: none;">
     <canvas id="capture-canvas" style="display: none;"></canvas>
 
     <script>
@@ -175,80 +187,56 @@
         const ejectLayer = document.getElementById('eject-layer');
         const photoWall = document.getElementById('photo-wall');
         const statusText = document.getElementById('status-text');
+        const sceneOverlay = document.getElementById('scene-overlay');
+        const activeSceneImg = document.getElementById('active-scene-img');
 
-        // --- 1. PS级滤镜引擎 ---
-        // 这里定义了各种滤镜的 CSS 参数
-        const filters = {
-            none:    'brightness(1.05) contrast(1.0)', // 稍微提亮一点点
-            vintage: 'sepia(0.4) contrast(1.1) brightness(1.1) saturate(1.2)', // 复古暖色
-            bw:      'grayscale(1.0) contrast(1.3) brightness(1.1)', // 森山大道风格黑白
-            cool:    'brightness(1.15) contrast(0.95) saturate(1.0) hue-rotate(-5deg)', // 冷白皮
-            hk:      'contrast(1.2) saturate(1.4) brightness(0.9) hue-rotate(-10deg)' // 港风浓郁
-        };
+        let currentSceneUrl = null;
 
-        let currentFilter = filters.none;
-
-        function setFilter(type, btn) {
-            // UI 切换
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        // --- 1. 风景切换逻辑 ---
+        function setScene(url, btn) {
+            // UI 更新
+            document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
-            // 应用滤镜到视频预览
-            currentFilter = filters[type];
-            video.style.filter = currentFilter;
+
+            currentSceneUrl = url;
+
+            if (url) {
+                // 设置预览图
+                sceneOverlay.style.backgroundImage = `url(${url})`;
+                sceneOverlay.style.opacity = '0.4'; // 预览时半透明
+                // 加载高清大图用于合成
+                activeSceneImg.src = url;
+            } else {
+                sceneOverlay.style.backgroundImage = 'none';
+                activeSceneImg.removeAttribute('src');
+            }
         }
 
-        // --- 2. 音效 (保险丝版) ---
+        // --- 2. 音效 ---
         let audioCtx;
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-        } catch(e) {}
-
+        try { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); } catch(e) {}
         function createNoiseBuffer() {
             if(!audioCtx) return null;
-            const bufferSize = audioCtx.sampleRate * 2;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            for(let i=0; i<data.length; i++) data[i] = Math.random()*2-1;
             return buffer;
         }
         const noiseBuffer = createNoiseBuffer();
-
         function playShutterSound() {
             if(!audioCtx) return;
-            try {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const t = audioCtx.currentTime;
-                // 机械快门声模拟
-                const noise1 = audioCtx.createBufferSource();
-                noise1.buffer = noiseBuffer;
-                const gain1 = audioCtx.createGain();
-                gain1.gain.setValueAtTime(0.8, t);
-                gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-                noise1.connect(gain1);
-                gain1.connect(audioCtx.destination);
-                noise1.start(t);
-                noise1.stop(t + 0.05);
-            } catch(e) {}
+            try { if(audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.05);
+            src.connect(g); g.connect(audioCtx.destination); src.start(t); src.stop(t+0.05); } catch(e){}
         }
-        
         function playMotorSound() {
             if(!audioCtx) return;
-            try {
-                const t = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, t);
-                osc.frequency.linearRampToValueAtTime(100, t + 0.6);
-                gain.gain.setValueAtTime(0.2, t);
-                gain.gain.linearRampToValueAtTime(0, t + 0.6);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(t);
-                osc.stop(t + 0.6);
-            } catch(e) {}
+            try { const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.linearRampToValueAtTime(100, t+0.6);
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t+0.6);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(t); osc.stop(t+0.6); } catch(e){}
         }
 
         // --- 3. 初始化 ---
@@ -262,22 +250,19 @@
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play().catch(e => console.log(e));
-                    statusText.innerText = "滤镜已就绪";
+                    statusText.innerText = "点击左侧圆圈选择景点";
                     setTimeout(() => statusText.style.opacity = '0', 2000);
                 };
-            } catch (err) {
-                statusText.innerText = "请允许摄像头权限";
-            }
+            } catch (err) { statusText.innerText = "请允许摄像头权限"; }
         }
         initCamera();
 
-        // --- 4. 拍照 (应用滤镜到照片) ---
+        // --- 4. 拍照与风景合成 ---
         const handleShoot = (e) => {
             if(e.cancelable) e.preventDefault();
             if (!video.srcObject) return;
 
             try { playShutterSound(); } catch(e){}
-            
             shutterBtn.style.transform = 'scale(0.85)';
             setTimeout(() => shutterBtn.style.transform = 'none', 80);
 
@@ -288,31 +273,36 @@
 
                 const ctx = canvas.getContext('2d');
                 
-                // 1. 镜像翻转
+                // 1. 绘制人像 (镜像)
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
-                
-                // 2. 核心：将 CSS 滤镜应用到 Canvas 画笔上！
-                // 这样保存下来的照片就带有同样的调色效果
-                ctx.filter = currentFilter;
-                
-                // 3. 绘制
+                // 基础美颜
+                ctx.filter = 'brightness(110%) contrast(95%)';
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // 4. 重置滤镜防止影响后续
                 ctx.filter = 'none';
 
+                // 2. 绘制风景叠加 (重曝效果)
+                if (currentSceneUrl && activeSceneImg.complete && activeSceneImg.naturalWidth > 0) {
+                    // 混合模式：滤色 (Screen) - 最适合双重曝光
+                    ctx.globalCompositeOperation = 'screen';
+                    ctx.globalAlpha = 0.4; // 透明度与预览保持一致
+                    
+                    // 绘制风景图铺满
+                    ctx.drawImage(activeSceneImg, 0, 0, canvas.width, canvas.height);
+                    
+                    // 恢复画笔
+                    ctx.globalAlpha = 1.0;
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+
                 createPolaroid(canvas.toDataURL('image/jpeg', 0.85));
-            } catch(err) {
-                console.error(err);
-                alert("拍摄失败");
-            }
+            } catch(err) { console.error(err); }
         };
 
         shutterBtn.addEventListener('click', handleShoot);
         shutterBtn.addEventListener('touchstart', handleShoot);
 
-        // --- 5. 生成照片 ---
+        // --- 5. 出片逻辑 ---
         function createPolaroid(imgUrl) {
             setTimeout(playMotorSound, 100);
 
@@ -322,18 +312,13 @@
             const deleteBtn = document.createElement('div');
             deleteBtn.className = 'delete-btn';
             deleteBtn.innerHTML = '×';
-            
             const removePhoto = (e) => {
                 e.stopPropagation();
                 polaroid.style.transition = 'all 0.3s ease-out';
                 polaroid.style.opacity = '0';
                 polaroid.style.transform = 'scale(0.5)';
-                setTimeout(() => {
-                    polaroid.remove();
-                    if (video.paused) video.play(); 
-                }, 300);
+                setTimeout(() => { polaroid.remove(); if (video.paused) video.play(); }, 300);
             };
-            
             deleteBtn.addEventListener('touchstart', removePhoto);
             deleteBtn.addEventListener('click', removePhoto);
 
@@ -348,70 +333,43 @@
             polaroid.appendChild(deleteBtn);
             ejectLayer.appendChild(polaroid);
             
-            polaroid.style.top = '10px';
-            polaroid.style.left = '0';
+            polaroid.style.top = '10px'; polaroid.style.left = '0';
             polaroid.style.transform = `rotate(0deg)`;
             polaroid.style.transition = 'transform 0.6s cubic-bezier(0.1, 0.9, 0.2, 1)'; 
-            
             polaroid.offsetHeight; 
-
             const randomAngle = (Math.random() * 8 - 4).toFixed(2);
             polaroid.style.transform = `translateY(-240px) rotate(${randomAngle}deg)`;
 
-            setTimeout(() => {
-                deleteBtn.style.display = 'block';
-                makeDraggable(polaroid);
-            }, 700);
+            setTimeout(() => { deleteBtn.style.display = 'block'; makeDraggable(polaroid); }, 700);
         }
 
         function makeDraggable(elem) {
             const rect = elem.getBoundingClientRect();
             ejectLayer.removeChild(elem);
             photoWall.appendChild(elem);
+            elem.style.position = 'absolute'; elem.style.left = rect.left + 'px'; elem.style.top = rect.top + 'px';
+            elem.style.transform = `rotate(${Math.random()*6-3}deg)`; elem.style.transition = 'transform 0.2s';
 
-            elem.style.position = 'absolute';
-            elem.style.left = rect.left + 'px';
-            elem.style.top = rect.top + 'px';
-            elem.style.transform = `rotate(${Math.random()*6-3}deg)`; 
-            elem.style.transition = 'transform 0.2s';
-
-            let isDragging = false;
-            let startX, startY, initialLeft, initialTop;
+            let isDragging = false; let startX, startY, initialLeft, initialTop;
             const getCoords = (e) => e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY};
 
             const startDrag = (e) => {
                 if (e.target.classList.contains('delete-btn')) return;
-                isDragging = true;
-                elem.style.zIndex = 999;
-                elem.style.transform = elem.style.transform + ' scale(1.05)';
-                const coords = getCoords(e);
-                startX = coords.x;
-                startY = coords.y;
-                initialLeft = parseFloat(elem.style.left);
-                initialTop = parseFloat(elem.style.top);
+                isDragging = true; elem.style.zIndex = 999; elem.style.transform = elem.style.transform + ' scale(1.05)';
+                const coords = getCoords(e); startX = coords.x; startY = coords.y;
+                initialLeft = parseFloat(elem.style.left); initialTop = parseFloat(elem.style.top);
             };
-
             const moveDrag = (e) => {
-                if (!isDragging) return;
-                if(e.cancelable) e.preventDefault();
+                if (!isDragging) return; if(e.cancelable) e.preventDefault();
                 const coords = getCoords(e);
                 elem.style.left = `${initialLeft + coords.x - startX}px`;
                 elem.style.top = `${initialTop + coords.y - startY}px`;
             };
-
             const endDrag = () => {
-                if (isDragging) {
-                    isDragging = false;
-                    elem.style.zIndex = 10;
-                    elem.style.transform = elem.style.transform.replace(' scale(1.05)', '');
-                }
+                if (isDragging) { isDragging = false; elem.style.zIndex = 10; elem.style.transform = elem.style.transform.replace(' scale(1.05)', ''); }
             };
-            elem.addEventListener('mousedown', startDrag);
-            window.addEventListener('mousemove', moveDrag);
-            window.addEventListener('mouseup', endDrag);
-            elem.addEventListener('touchstart', startDrag, {passive:false});
-            window.addEventListener('touchmove', moveDrag, {passive:false});
-            window.addEventListener('touchend', endDrag);
+            elem.addEventListener('mousedown', startDrag); window.addEventListener('mousemove', moveDrag); window.addEventListener('mouseup', endDrag);
+            elem.addEventListener('touchstart', startDrag, {passive:false}); window.addEventListener('touchmove', moveDrag, {passive:false}); window.addEventListener('touchend', endDrag);
         }
     </script>
 </body>
